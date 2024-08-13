@@ -29,7 +29,6 @@ C++ Console
 Получите полный контроль над своим компьютером с помощью Dispatcher Tools!
 
 [Скриншоты](https://github.com/jeffpharaon/DispatcherTools/tree/master/Screenshoots)  
-*Все команды*
 
 
 ![Screenshoot_DT_1](https://github.com/user-attachments/assets/e527278d-4fc4-43c2-a40e-38796a14d823)
