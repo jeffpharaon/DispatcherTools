@@ -31,17 +31,22 @@ C++ Console
 [Скриншоты](https://github.com/jeffpharaon/DispatcherTools/tree/master/Screenshoots)  
 *Все команды*
 
+
 ![Screenshoot_DT_1](https://github.com/user-attachments/assets/e527278d-4fc4-43c2-a40e-38796a14d823)
 *Все команды*
+
 
 ![Screenshoot_DT_2](https://github.com/user-attachments/assets/2adc2740-654b-40f4-92b5-3f4d2765ffde)
 *Поиск и обнаружение процесса*
 
+
 ![Screenshoot_DT_3](https://github.com/user-attachments/assets/52d7245e-9aee-4108-91fe-e4459f58d7ca)
 *Принудительное завершение процесса*
 
+
 ![Screenshoot_DT_4](https://github.com/user-attachments/assets/1c081c5f-781d-419d-9d3d-78497bb9d08c)
 *Все запущенные процессы*
+
 
 ### УСТАНОВКА
 
