@@ -5,7 +5,7 @@ C++ Console
 
 ### ХАРАКТЕРИСТИКИ
 
-* Название Dispatcher Tools
+* Название: Dispatcher Tools
 * Версия: 0.0.1 release
 * Платформа: Windows 8 - 11
 * Язык программирования: C++
