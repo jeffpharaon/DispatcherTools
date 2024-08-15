@@ -64,7 +64,7 @@ C++ Console
 
 ### ⬇️УСТАНОВКА
 
-[Скачать Dispatcher Tools 0.0.2 release Windows](https://github.com/jeffpharaon/DispatcherTools/blob/master/Application/installer_dt.exe)  
+[Скачать Dispatcher Tools 0.0.3 release Windows](https://github.com/jeffpharaon/DispatcherTools/blob/master/Application/installer_dt.exe)  
 После запуска установщика введите путь например `C:\User\Apps` и дождитесь установки.  
 Приложение будет размещено на рабочем столе и готово к использованию.
 
