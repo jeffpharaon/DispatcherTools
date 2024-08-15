@@ -30,7 +30,7 @@ C++ Console
 
 ### 📸СКРИНШОТЫ
 
-![Screenshoot_DT_1](https://github.com/user-attachments/assets/1ba517ce-6bcc-4a82-9aa6-44b1da19deab)
+![Screenshoot_DT_1](https://github.com/user-attachments/assets/64246cc7-d587-492c-a391-32e2fec9e6bd)
 *Все команды*  
 
 
