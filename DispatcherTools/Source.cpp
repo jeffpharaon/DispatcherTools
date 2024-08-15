@@ -5,6 +5,9 @@
 #include <TlHelp32.h>
 #include <algorithm>
 #include <cctype>
+#include <vector>
+#include <Psapi.h>
+#pragma comment(lib, "Psapi.lib")
 using namespace std;
 
 int help();
@@ -13,6 +16,8 @@ int allprocess();
 int clear();
 int logo();
 int info();
+int where(const string& processIdentifier);
+int check(const string& root);
 
 int processkill(const wstring& processName);
 int processkillByID(DWORD processID);
@@ -21,6 +26,7 @@ int searchprocess(const wstring& processName);
 string getlogo(ifstream& file);
 string trim(const string& str);
 bool isNumber(const string& str);
+wstring toLower(const wstring& str);
 
 int main() { interfaces(); return 0; }
 
@@ -55,6 +61,14 @@ int interfaces() {
         else if (enter == "/all") allprocess();
         else if (enter == "/clear") clear();
         else if (enter == "/info") info();
+        else if (enter.substr(0, 7) == "/where ") {
+            string argument = trim(enter.substr(7));
+            where(argument);
+        }
+        else if (enter.substr(0, 7) == "/check ") {
+            string argument = trim(enter.substr(7));
+            check(argument);
+        }
         else cout << "ERROR: Unknown command. Try again \n" << endl;
     }
 }
@@ -62,7 +76,9 @@ int interfaces() {
 int help() {
     cout << "1. /help - all commands \n2. /kill process_name or process_id - forced termination of the process";
     cout << "\n3. /search process_name - search for a running process \n4. /all - task manager parsing";
-    cout << "\n5. /clear - clear console \n6. /info - information about the app and the creator \n" << endl;
+    cout << "\n5. /where process_name or process_id - show file path of the process";
+    cout << "\n6. /check root_word - search processes by root word";
+    cout << "\n7. /clear - clear console \n8. /info - information about the app and the creator \n" << endl;
     return 0;
 }
 
@@ -70,7 +86,7 @@ int info() {
     cout << "Name: Dispatcher Tools" << endl;
     cout << "Creator: Edelways (JeffPharaon)" << endl;
     cout << "License: MatteDair Studio" << endl;
-    cout << "Version: 0.0.1 Release" << endl;
+    cout << "Version: 0.0.3 Release" << endl;
     cout << "Platform: Windows 8 - 11" << endl;
     cout << "More: https://github.com/jeffpharaon \n" << endl;
     return 0;
@@ -216,3 +232,75 @@ string trim(const string& str) {
 bool isNumber(const string& str) {
     return !str.empty() && all_of(str.begin(), str.end(), ::isdigit);
 }
+
+wstring toLower(const wstring& str) {
+    wstring result = str;
+    transform(result.begin(), result.end(), result.begin(), ::towlower);
+    return result;
+}
+
+int where(const string& processIdentifier) {
+    HANDLE snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+    if (snapshot == INVALID_HANDLE_VALUE) {
+        wcerr << L"ERROR: Error getting the list of processes \n" << endl;
+        return 1;
+    }
+
+    PROCESSENTRY32 entry;
+    entry.dwSize = sizeof(PROCESSENTRY32);
+    bool processFound = false;
+
+    if (Process32First(snapshot, &entry)) {
+        do {
+            if ((isNumber(processIdentifier) && entry.th32ProcessID == stoi(processIdentifier)) ||
+                (!isNumber(processIdentifier) && wstring(entry.szExeFile) == wstring(processIdentifier.begin(), processIdentifier.end()))) {
+                processFound = true;
+                HANDLE processHandle = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, entry.th32ProcessID);
+                if (processHandle != NULL) {
+                    wchar_t processPath[MAX_PATH];
+                    if (GetModuleFileNameEx(processHandle, NULL, processPath, MAX_PATH))
+                        wcout << L">> Process path: " << processPath << "\n" << endl;
+                    else wcerr << L"ERROR: Unable to get the process path \n";
+                    CloseHandle(processHandle);
+                }
+                else wcerr << L"ERROR: Process opening error \n";
+                break;
+            }
+        } while (Process32Next(snapshot, &entry));
+    }
+    else wcerr << L"ERROR: An error occurred while retrieving the list of processes \n" << endl;
+
+    if (!processFound) wcerr << L"ERROR: The process was not found \n" << endl;
+
+    CloseHandle(snapshot);
+    return 0;
+}
+
+int check(const string& root) {
+    HANDLE snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+    if (snapshot == INVALID_HANDLE_VALUE) {
+        wcerr << L"ERROR: Error getting the list of processes \n" << endl;
+        return 1;
+    }
+
+    PROCESSENTRY32 entry;
+    entry.dwSize = sizeof(PROCESSENTRY32);
+    wstring rootW = wstring(root.begin(), root.end());
+    rootW = toLower(rootW);
+
+    if (Process32First(snapshot, &entry)) {
+        wcout << L">> Matching processes: \n";
+        do {
+            wstring exeFileName = toLower(entry.szExeFile);
+            if (exeFileName.find(rootW) != wstring::npos)
+                wcout << L"Id: " << entry.th32ProcessID << L" Name: " << entry.szExeFile << endl;
+        } while (Process32Next(snapshot, &entry));
+    }
+    else wcerr << L"ERROR: An error occurred while retrieving the list of processes \n" << endl;
+
+    CloseHandle(snapshot);
+    cout << endl;
+    return 0;
+}
+
+
