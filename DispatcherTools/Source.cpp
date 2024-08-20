@@ -31,14 +31,12 @@ int check(const string& root);
 int processkill(const wstring& processName);
 int processkillByID(DWORD processID);
 int searchprocess(const wstring& processName);
-//int whatProcess(const string& processIdentifier);
 
 string getlogo(ifstream& file);
 string trim(const string& str);
 wstring toLower(const wstring& str);
 
 bool isNumber(const string& str);
-//bool isSystemProcess(DWORD ProcessID);
 
 int main() { interfaces(); return 0; }
 
@@ -82,10 +80,6 @@ int interfaces() {
             check(argument);
         }
         else if (enter == "/view") view();
-        //else if (enter.substr(0, 6) == "/what ") {
-        //    string argument = trim(enter.substr(6));
-        //    whatProcess(argument);
-        //}
         else if (enter == "/git") github();
         else cout << "ERROR: Unknown command. Try again \n" << endl;
     }
@@ -401,79 +395,4 @@ int github() {
     ShellExecuteA(NULL, "open", url, NULL, NULL, SW_SHOWNORMAL);
     return 0;
 }
-
-//bool isSystemProcess(DWORD processID) {
-//    HANDLE hProcess = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, processID);
-//    if (hProcess == NULL) {
-//        return false;
-//    }
-//
-//    HANDLE hToken;
-//    if (!OpenProcessToken(hProcess, TOKEN_QUERY, &hToken)) {
-//        CloseHandle(hProcess);
-//        return false;
-//    }
-//
-//    DWORD tokenInfoLength = 0;
-//    GetTokenInformation(hToken, TokenOwner, NULL, 0, &tokenInfoLength);
-//    PTOKEN_OWNER pTokenOwner = (PTOKEN_OWNER)malloc(tokenInfoLength);
-//    if (!GetTokenInformation(hToken, TokenOwner, pTokenOwner, tokenInfoLength, &tokenInfoLength)) {
-//        free(pTokenOwner);
-//        CloseHandle(hToken);
-//        CloseHandle(hProcess);
-//        return false;
-//    }
-//
-//    PSID pOwnerSID = pTokenOwner->Owner;
-//
-//    SID_IDENTIFIER_AUTHORITY siaNTAuthority = SECURITY_NT_AUTHORITY;
-//    PSID pSystemSID;
-//    AllocateAndInitializeSid(&siaNTAuthority, 1, SECURITY_LOCAL_SYSTEM_RID, 0, 0, 0, 0, 0, 0, 0, &pSystemSID);
-//
-//    BOOL isSystem = FALSE;
-//    if (CheckTokenMembership(hToken, pSystemSID, &isSystem)) {
-//        free(pTokenOwner);
-//        CloseHandle(hToken);
-//        CloseHandle(hProcess);
-//        FreeSid(pSystemSID);
-//        return isSystem;
-//    }
-//
-//    free(pTokenOwner);
-//    CloseHandle(hToken);
-//    CloseHandle(hProcess);
-//    FreeSid(pSystemSID);
-//    return false;
-//}
-//
-//int whatProcess(const string& processIdentifier) {
-//    HANDLE snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
-//    if (snapshot == INVALID_HANDLE_VALUE) {
-//        wcerr << L"ERROR: Error getting the list of processes \n" << endl;
-//        return 1;
-//    }
-//
-//    PROCESSENTRY32 entry;
-//    entry.dwSize = sizeof(PROCESSENTRY32);
-//    bool processFound = false;
-//
-//    if (Process32First(snapshot, &entry)) {
-//        do {
-//            if ((isNumber(processIdentifier) && entry.th32ProcessID == stoi(processIdentifier)) ||
-//                (!isNumber(processIdentifier) && wstring(entry.szExeFile) == wstring(processIdentifier.begin(), processIdentifier.end()))) {
-//                processFound = true;
-//                bool isSystem = isSystemProcess(entry.th32ProcessID);
-//                if (isSystem) wcout << L"Process " << entry.szExeFile << L" is a system process \n" << endl;
-//                else wcout << L"Process " << entry.szExeFile << L" is third-party \n" << endl;
-//                break;
-//            }
-//        } while (Process32Next(snapshot, &entry));
-//    }
-//
-//    if (!processFound)
-//        wcerr << L"ERROR: No such process was found or started \n" << endl;
-//
-//    CloseHandle(snapshot);
-//    return 0;
-//}
 
