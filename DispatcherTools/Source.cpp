@@ -98,7 +98,7 @@ int help() {
     cout << "\n6. /check root_word - search processes by root word";
     cout << "\n7. /view - view processes with high RAM and CPU usage";
     cout << "\n8. /clear - clear console \n9. /info - information about the app and the creator";
-    cout << "\n9. /git - open the project's github \n" << endl;
+    cout << "\n10. /git - open the project's github \n" << endl;
     return 0;
 }
 
