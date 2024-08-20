@@ -6,12 +6,12 @@ C++ Console
 ### ⚙️ХАРАКТЕРИСТИКИ
 
 * Название: Dispatcher Tools
-* Версия: 0.0.3 release
+* Версия: 0.0.4 release
 * Платформа: Windows 8 - 11
 * Язык программирования: C++
 * Уровень доступа: Open Source
 * Язык: English
-* Вес: 3,58 мб
+* Вес: 1,54 мб
 * Тип приложения: Console
 * Лицензия: MatteDair Studio
 * Разработчик: Edelways (JeffPharaon)
@@ -58,7 +58,11 @@ C++ Console
 *Поиск процесса по ID в файловой системе компьюютера*
 
 
-![Screenshoot_DT_8](https://github.com/user-attachments/assets/33d2ae0b-01f0-40a4-a497-89ebc4afb10f)
+![Screenshoot_DT_8](https://github.com/user-attachments/assets/fd1c6253-95e9-4414-b0dc-41bb32ce11c7)
+*Отображение процессов высоко нагружающих оперативную память и процессор*  
+
+
+![Screenshoot_DT_9](https://github.com/user-attachments/assets/33d2ae0b-01f0-40a4-a497-89ebc4afb10f)
 *Все запущенные процессы*  
 
 
@@ -83,8 +87,9 @@ C++ Console
 Например `/where DispatcherTools.exe` или `/where 20031`
 7. **/check** корневое_слово - отображение процессов по совпадению с корневым словом  
 Например ввод: `/check sys`, а вывод: `Id: 4 Name: System, Id: 140 Name: Secure System`
-8. **/clear** - очистка консоли 
-9. **/info** - информация о программе и разработчике
+8. **/view** - просмотр процессов с высокой загрузкой оперативной памяти и процессора
+9. **/clear** - очистка консоли 
+10. **/info** - информация о программе и разработчике
 
 ### ⚠️ВНИМАНИЕ
 
