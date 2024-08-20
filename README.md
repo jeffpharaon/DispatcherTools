@@ -1,5 +1,5 @@
 # DispatcherTools
-C++ Console
+C/C++ Console
 
 ## ⬜️ДОКУМЕНТАЦИЯ
 
@@ -8,7 +8,7 @@ C++ Console
 * Название: Dispatcher Tools
 * Версия: 0.0.4 release
 * Платформа: Windows 8 - 11
-* Язык программирования: C++
+* Язык программирования: C/C++
 * Уровень доступа: Open Source
 * Язык: English
 * Вес: 1,54 мб
