@@ -7,7 +7,14 @@
 #include <cctype>
 #include <vector>
 #include <Psapi.h>
+#include <pdh.h>
+#include <pdhmsg.h>
+#include <conio.h>
+#include <thread>
+#include <mutex>
+#include <tchar.h>
 #pragma comment(lib, "Psapi.lib")
+#pragma comment(lib, "Pdh.lib")
 using namespace std;
 
 int help();
@@ -16,17 +23,22 @@ int allprocess();
 int clear();
 int logo();
 int info();
+int view();
+int github();
+
 int where(const string& processIdentifier);
 int check(const string& root);
-
 int processkill(const wstring& processName);
 int processkillByID(DWORD processID);
 int searchprocess(const wstring& processName);
+//int whatProcess(const string& processIdentifier);
 
 string getlogo(ifstream& file);
 string trim(const string& str);
-bool isNumber(const string& str);
 wstring toLower(const wstring& str);
+
+bool isNumber(const string& str);
+//bool isSystemProcess(DWORD ProcessID);
 
 int main() { interfaces(); return 0; }
 
@@ -69,6 +81,12 @@ int interfaces() {
             string argument = trim(enter.substr(7));
             check(argument);
         }
+        else if (enter == "/view") view();
+        //else if (enter.substr(0, 6) == "/what ") {
+        //    string argument = trim(enter.substr(6));
+        //    whatProcess(argument);
+        //}
+        else if (enter == "/git") github();
         else cout << "ERROR: Unknown command. Try again \n" << endl;
     }
 }
@@ -78,7 +96,9 @@ int help() {
     cout << "\n3. /search process_name - search for a running process \n4. /all - task manager parsing";
     cout << "\n5. /where process_name or process_id - show file path of the process";
     cout << "\n6. /check root_word - search processes by root word";
-    cout << "\n7. /clear - clear console \n8. /info - information about the app and the creator \n" << endl;
+    cout << "\n7. /view - view processes with high RAM and CPU usage";
+    cout << "\n8. /clear - clear console \n9. /info - information about the app and the creator";
+    cout << "\n9. /git - open the project's github \n" << endl;
     return 0;
 }
 
@@ -86,7 +106,7 @@ int info() {
     cout << "Name: Dispatcher Tools" << endl;
     cout << "Creator: Edelways (JeffPharaon)" << endl;
     cout << "License: MatteDair Studio" << endl;
-    cout << "Version: 0.0.3 Release" << endl;
+    cout << "Version: 0.0.4 Release" << endl;
     cout << "Platform: Windows 8 - 11" << endl;
     cout << "More: https://github.com/jeffpharaon \n" << endl;
     return 0;
@@ -133,7 +153,7 @@ int processkillByID(DWORD processID) {
     if (processHandle != NULL) {
         if (TerminateProcess(processHandle, 0))
             wcout << L">> Process with ID " << processID << L" was killed \n" << endl;
-        else wcerr << L"ERROR: The process cannot be completed: " << processID << "\n";
+        else wcerr << L"ERROR: The process cannot be completed: " << processID << "\n" << endl;
         CloseHandle(processHandle);
     }
     else wcerr << L"ERROR: Process opening error: " << processID << "\n";
@@ -276,6 +296,8 @@ int where(const string& processIdentifier) {
     return 0;
 }
 
+mutex mtx;
+
 int check(const string& root) {
     HANDLE snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
     if (snapshot == INVALID_HANDLE_VALUE) {
@@ -303,4 +325,155 @@ int check(const string& root) {
     return 0;
 }
 
+void checkCpuUsage(DWORD processID, const wstring& processName) {
+    PDH_HQUERY cpuQuery;
+    PDH_HCOUNTER cpuTotal;
+    PdhOpenQuery(NULL, NULL, &cpuQuery);
+    wstring counterPath = L"\\Process(" + processName + L")\\% Processor Time";
+    PdhAddCounter(cpuQuery, counterPath.c_str(), NULL, &cpuTotal);
+    PdhCollectQueryData(cpuQuery);
+    Sleep(100);
+    PDH_FMT_COUNTERVALUE counterVal;
+    PdhCollectQueryData(cpuQuery);
+    PdhGetFormattedCounterValue(cpuTotal, PDH_FMT_DOUBLE, NULL, &counterVal);
+
+    if (counterVal.doubleValue > 10.0) {
+        lock_guard<mutex> lock(mtx);
+        wcout << L"Process ID: " << processID << L", Name: " << processName << L", CPU: " << counterVal.doubleValue << L"%" << endl;
+    }
+
+    PdhCloseQuery(cpuQuery);
+}
+
+void checkMemoryUsage(DWORD processID, const wstring& processName) {
+    HANDLE processHandle = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, processID);
+    if (processHandle != NULL) {
+        PROCESS_MEMORY_COUNTERS pmc;
+        if (GetProcessMemoryInfo(processHandle, &pmc, sizeof(pmc))) {
+            if (pmc.WorkingSetSize > 200 * 1024 * 1024) {
+                lock_guard<mutex> lock(mtx);
+                wcout << L"Process ID: " << processID << L", Name: " << processName << L", RAM: " << pmc.WorkingSetSize / (1024 * 1024) << L" MB" << endl;
+            }
+        }
+        CloseHandle(processHandle);
+    }
+}
+
+int view() {
+    HANDLE snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+    if (snapshot == INVALID_HANDLE_VALUE) {
+        wcerr << L"ERROR: Error getting the list of processes \n" << endl;
+        return 1;
+    }
+    PROCESSENTRY32 entry;
+    entry.dwSize = sizeof(PROCESSENTRY32);
+    vector<thread> threads;
+
+    if (Process32First(snapshot, &entry)) {
+        wcout << L">> Processes with high CPU usage: \n";
+        do {
+            threads.emplace_back(checkCpuUsage, entry.th32ProcessID, entry.szExeFile);
+        } while (Process32Next(snapshot, &entry));
+
+        for (auto& t : threads) t.join();
+
+        threads.clear();
+        wcout << L">> Processes with high RAM usage: \n";
+        if (Process32First(snapshot, &entry)) {
+            do {
+                threads.emplace_back(checkMemoryUsage, entry.th32ProcessID, entry.szExeFile);
+            } while (Process32Next(snapshot, &entry));
+        }
+
+        for (auto& t : threads) t.join();
+
+    }
+    else wcerr << L"ERROR: An error occurred while retrieving the list of processes \n" << endl;
+
+    CloseHandle(snapshot);
+    cout << endl;
+    return 0;
+}
+
+int github() {
+    cout << ">> Open a browser... \n" << endl;
+    const char* url = "https://github.com/jeffpharaon/DispatcherTools/tree/master";
+    ShellExecuteA(NULL, "open", url, NULL, NULL, SW_SHOWNORMAL);
+    return 0;
+}
+
+//bool isSystemProcess(DWORD processID) {
+//    HANDLE hProcess = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, processID);
+//    if (hProcess == NULL) {
+//        return false;
+//    }
+//
+//    HANDLE hToken;
+//    if (!OpenProcessToken(hProcess, TOKEN_QUERY, &hToken)) {
+//        CloseHandle(hProcess);
+//        return false;
+//    }
+//
+//    DWORD tokenInfoLength = 0;
+//    GetTokenInformation(hToken, TokenOwner, NULL, 0, &tokenInfoLength);
+//    PTOKEN_OWNER pTokenOwner = (PTOKEN_OWNER)malloc(tokenInfoLength);
+//    if (!GetTokenInformation(hToken, TokenOwner, pTokenOwner, tokenInfoLength, &tokenInfoLength)) {
+//        free(pTokenOwner);
+//        CloseHandle(hToken);
+//        CloseHandle(hProcess);
+//        return false;
+//    }
+//
+//    PSID pOwnerSID = pTokenOwner->Owner;
+//
+//    SID_IDENTIFIER_AUTHORITY siaNTAuthority = SECURITY_NT_AUTHORITY;
+//    PSID pSystemSID;
+//    AllocateAndInitializeSid(&siaNTAuthority, 1, SECURITY_LOCAL_SYSTEM_RID, 0, 0, 0, 0, 0, 0, 0, &pSystemSID);
+//
+//    BOOL isSystem = FALSE;
+//    if (CheckTokenMembership(hToken, pSystemSID, &isSystem)) {
+//        free(pTokenOwner);
+//        CloseHandle(hToken);
+//        CloseHandle(hProcess);
+//        FreeSid(pSystemSID);
+//        return isSystem;
+//    }
+//
+//    free(pTokenOwner);
+//    CloseHandle(hToken);
+//    CloseHandle(hProcess);
+//    FreeSid(pSystemSID);
+//    return false;
+//}
+//
+//int whatProcess(const string& processIdentifier) {
+//    HANDLE snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+//    if (snapshot == INVALID_HANDLE_VALUE) {
+//        wcerr << L"ERROR: Error getting the list of processes \n" << endl;
+//        return 1;
+//    }
+//
+//    PROCESSENTRY32 entry;
+//    entry.dwSize = sizeof(PROCESSENTRY32);
+//    bool processFound = false;
+//
+//    if (Process32First(snapshot, &entry)) {
+//        do {
+//            if ((isNumber(processIdentifier) && entry.th32ProcessID == stoi(processIdentifier)) ||
+//                (!isNumber(processIdentifier) && wstring(entry.szExeFile) == wstring(processIdentifier.begin(), processIdentifier.end()))) {
+//                processFound = true;
+//                bool isSystem = isSystemProcess(entry.th32ProcessID);
+//                if (isSystem) wcout << L"Process " << entry.szExeFile << L" is a system process \n" << endl;
+//                else wcout << L"Process " << entry.szExeFile << L" is third-party \n" << endl;
+//                break;
+//            }
+//        } while (Process32Next(snapshot, &entry));
+//    }
+//
+//    if (!processFound)
+//        wcerr << L"ERROR: No such process was found or started \n" << endl;
+//
+//    CloseHandle(snapshot);
+//    return 0;
+//}
 
